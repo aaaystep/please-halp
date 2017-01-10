@@ -1,18 +1,18 @@
-"""This is a testing module so I can easily iterate.
-"""
+"""scrape tool, Steam."""
+
 from lxml import html
 import requests
 
-#Ultimate goal is to be able to scrape text and find keywords.
-
 def engineid():
-    """Find the xpath of "About this Game" in the Steam store and print it in terminal.
-    """
+    """Search for keyword Unreal."""
+
     page = requests.get('http://store.steampowered.com/app/454830/?snr=1_7_7_230_150_14')
     tree = html.fromstring(page.content)
-    xpath = 'string(//div[@class=details_block]/)'
-    #make xpath into a string so we can find substrings
-    words = tree.xpath(xpath)
-    print(words)
+    aboutgame = str(tree.xpath('//div[@class="game_area_description"]/text()'))
+    # converts HTML tree to searchable string
+    
+    if 'Unreal' in aboutgame:
+        print('This game is made with Unreal Engine.')
+
 
 engineid()
