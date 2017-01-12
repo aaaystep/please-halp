@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup
 import requests
 
 class Google:
-    """class"""
+    """http://stackoverflow.com/questions/41527601/python-google-search"""
     #pylint: disable=locally-disabled, W1401
     @classmethod
     def search(cls, search):
