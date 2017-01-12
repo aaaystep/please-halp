@@ -1,0 +1,168 @@
+"""VR scrape, Steam"""
+#pylint: disable=C0301
+#pylint: disable=C0103
+#pylint: disable=I0011
+
+from datetime import datetime
+import csv
+from dateutil.parser import parse
+from lxml import html
+import requests
+
+ERRORLINKS = []
+CSVOUTPUT = []
+
+def get_date(array):
+    """find date"""
+    for child in array:
+        child = child.lstrip()
+        if is_date(child):
+            return child
+def is_date(string):
+    """organizes string into m/d/Y"""
+    try:
+        datetime.strptime(string, '%b %d, %Y')
+        return True
+    except ValueError:
+        return False
+    #if string:
+	 #   try:
+	  #  	print string
+	   #     tmp = parse(string)
+	    #    print tmp
+	 #       return True
+	 #   except ValueError:
+	#        return False
+    #else:
+    #	return False
+def is_int(string):
+    """changes int into string"""
+    try:
+        int(string)
+        return True
+    except ValueError:
+        return False
+def get_headset_info(possiblematches):
+    """finds HMD is Rift or Vive"""
+    arr = []
+    for possmatch in possiblematches:
+        if possmatch == 'Oculus Rift' or possmatch == 'HTC Vive':
+            if possmatch is not None:
+                arr.append(possmatch.encode('utf-8'))
+    return arr
+
+def engineid(aboutstring):
+    """find engine keywords in game descriptor"""
+    # in progress
+
+def get_app_info(links):
+    """pulls game, genre, dev, pub, release, hmd, link data"""
+    for link in links:
+        page = requests.get(link)
+        tree = html.fromstring(page.content)
+        print(link)
+        try:
+            gamename = tree.xpath('//div[@class="details_block"]/text()')[1].encode('utf-8').lstrip()
+        except IndexError:
+            print('Error, URL outputted in seperate CSV')
+            CSVOUTPUT.append([[link]])
+            continue
+
+        details_child = tree.xpath('//div[@class="details_block"]/*/text()')
+
+        catget = ''
+
+        genres = []
+        developer = ''
+        publisher = ''
+        release_date = get_date(tree.xpath('//div[@class="details_block"]/text()'))
+        if release_date is not None:
+            release_date = release_date.encode('utf-8')
+        supported_hmd = get_headset_info(tree.xpath('//div[@class="game_area_details_specs"]/a[@class="name"]/text()'))
+
+        for child in details_child:
+            if child == 'Genre:':
+                catget = 'Genre'
+            if child == 'Developer:':
+                catget = 'Developer'
+            if child == 'Publisher:':
+                catget = 'Publisher'
+            if catget == 'Genre' and child != 'Genre:':
+                if child is not None:
+                    genres.append(child.encode('utf-8'))
+            if catget == 'Developer' and child != 'Developer:':
+                if child is not None:
+                    developer = child.encode('utf-8')
+            if catget == 'Publisher' and child != 'Publisher:':
+                if child is not None:
+                    publisher = child.encode('utf-8')
+                    catget = ''
+        	#if catget == 'Release' and child != 'Release Date:':
+			#	print child
+			#	release_date = child
+			#	catget = ''
+
+		#print details_child
+		#print gamename
+		#print genres
+		#print developer
+		#print publisher
+		#print release_date
+		#print supported_hmd
+        CSVOUTPUT.append([[gamename], genres, [developer], [publisher], release_date, supported_hmd, [link]])
+
+csv.register_dialect(
+    'mydialect',
+    delimiter=',',
+    quotechar='"',
+    doublequote=True,
+    skipinitialspace=True,
+    lineterminator='\r\n',
+    quoting=csv.QUOTE_MINIMAL)
+
+page = requests.get('http://store.steampowered.com/search/?sort_by=Released_DESC&tags=-1&category1=998%2C994&vrsupport=402')
+tree = html.fromstring(page.content)
+
+numofpages = tree.xpath('//div[@class="search_pagination_right"]/a/text()')
+lastpage = 1
+currentpage = 1
+for num in numofpages:
+    if is_int(num):
+        currint = int(num)
+        if currint > lastpage:
+            lastpage = currint
+
+print(lastpage)
+
+while currentpage <= lastpage:
+    links = tree.xpath('//*[@id="search_result_container"]/div[2]/a/@href')
+    get_app_info(links)
+    currentpage += 1
+    print('moving to page' + str(currentpage))
+    page = requests.get('http://store.steampowered.com/search/?sort_by=_ASC&vrsupport=101%2C102&page=' + str(currentpage))
+    tree = html.fromstring(page.content)
+
+print(ERRORLINKS)
+print(CSVOUTPUT)
+with open('goscrape.csv', 'w') as mycsvfile:
+    DATAWRITE = csv.writer(mycsvfile, dialect='mydialect')
+    for row in CSVOUTPUT:
+        print(row)
+        DATAWRITE.writerow(row)
+
+with open('spotcheck.csv', 'w') as mycsvfile:
+    DATAWRITE = csv.writer(mycsvfile, dialect='mydialect')
+    for row in ERRORLINKS:
+        print(row)
+        DATAWRITE.writerow(row)
+
+print(len(ERRORLINKS))
+
+#page = requests.get('http://store.steampowered.com/app/236390/')
+#page = requests.get('http://store.steampowered.com/app/570/?snr=1_7_7_230_150_1')
+
+#driver = webdriver.Chrome('/Users/rambod/Downloads/chromedriver')
+#driver.get('http://store.steampowered.com/search/?sort_by=_ASC&vrsupport=101%2C102&page=1')
+#elems = driver.find_elements_by_class_name('search_result_row')
+#print elems
+#driver.close()
