@@ -1,7 +1,5 @@
 """VR scrape, Steam"""
-#pylint: disable=C0301
-#pylint: disable=C0103
-#pylint: disable=I0011
+#pylint: disable=locally-disabled, C0301, C0103
 
 from datetime import datetime
 import csv
@@ -11,6 +9,7 @@ import requests
 
 ERRORLINKS = []
 CSVOUTPUT = []
+# arrays to hold entries, .csv
 
 def get_date(array):
     """find date"""
@@ -18,6 +17,7 @@ def get_date(array):
         child = child.lstrip()
         if is_date(child):
             return child
+	    
 def is_date(string):
     """organizes string into m/d/Y"""
     try:
@@ -25,16 +25,7 @@ def is_date(string):
         return True
     except ValueError:
         return False
-    #if string:
-	 #   try:
-	  #  	print string
-	   #     tmp = parse(string)
-	    #    print tmp
-	 #       return True
-	 #   except ValueError:
-	#        return False
-    #else:
-    #	return False
+
 def is_int(string):
     """changes int into string"""
     try:
@@ -42,6 +33,7 @@ def is_int(string):
         return True
     except ValueError:
         return False
+	
 def get_headset_info(possiblematches):
     """finds HMD is Rift or Vive"""
     arr = []
@@ -97,18 +89,7 @@ def get_app_info(links):
                 if child is not None:
                     publisher = child.encode('utf-8')
                     catget = ''
-        	#if catget == 'Release' and child != 'Release Date:':
-			#	print child
-			#	release_date = child
-			#	catget = ''
 
-		#print details_child
-		#print gamename
-		#print genres
-		#print developer
-		#print publisher
-		#print release_date
-		#print supported_hmd
         CSVOUTPUT.append([[gamename], genres, [developer], [publisher], release_date, supported_hmd, [link]])
 
 csv.register_dialect(
@@ -122,6 +103,7 @@ csv.register_dialect(
 
 page = requests.get('http://store.steampowered.com/search/?sort_by=Released_DESC&tags=-1&category1=998%2C994&vrsupport=402')
 tree = html.fromstring(page.content)
+# pull pages from Steam store
 
 numofpages = tree.xpath('//div[@class="search_pagination_right"]/a/text()')
 lastpage = 1
@@ -157,12 +139,3 @@ with open('spotcheck.csv', 'w') as mycsvfile:
         DATAWRITE.writerow(row)
 
 print(len(ERRORLINKS))
-
-#page = requests.get('http://store.steampowered.com/app/236390/')
-#page = requests.get('http://store.steampowered.com/app/570/?snr=1_7_7_230_150_1')
-
-#driver = webdriver.Chrome('/Users/rambod/Downloads/chromedriver')
-#driver.get('http://store.steampowered.com/search/?sort_by=_ASC&vrsupport=101%2C102&page=1')
-#elems = driver.find_elements_by_class_name('search_result_row')
-#print elems
-#driver.close()
