@@ -15,7 +15,7 @@ new_tree = html.fromstring(new_page.content)
 #now we do the same request/html pull we did prior but now for that new link
 
 new_word = str(new_tree.xpath('//div[@class="body"]/text()'))
-#makes the html tree into a searchable string PAGE 02
+#makes the html tree into a searchable string
 new_link = (new_tree.xpath('//*[@id="more_posts_url"]/@href'))[0]
 #also in this link we're looking for our tertiary link labeled under html id "more_posts"url"
 
