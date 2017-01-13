@@ -28,7 +28,7 @@ deeper_string = deeper.text
 #HERE IS THE QUESTION: i also know that this page can contain ANOTHER link, also under the same html id
   #how to loop?
 
-#unitycount = new_word.count('Unity') + new_word.count('Unity.') + new_word.count('Unity,')
-#unrealcount = new_word.count('Unreal') + new_word.count('Unreal.') + new_word.count('Unreal,') + new_word.count('UE') + new_word.count('UE4')
+#unitycount = new_word.count('Unity', 'Unity.', 'Unity,') + deeper_string.count('Unity', 'Unity.', 'Unity,')
+#unrealcount = new_word.count('Unreal', 'Unreal.', 'Unreal,', 'UE', 'UE4') + deeper_string.count('Unreal', 'Unreal.', 'Unreal,', 'UE', 'UE4')
 #print(unitycount, unrealcount)
 #ultimate goal is to count the number of keywords that appear in all these pages
