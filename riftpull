@@ -1,0 +1,88 @@
+"""VR scrape, Oculus Rift"""
+#pylint: disable=locally-disabled, C0103
+
+import csv#.csv
+from urllib.request import urlopen #urlopen for soup
+import re #findall in string
+from bs4 import BeautifulSoup#scraping library
+from lxml import html#xpath library
+import requests#get link
+
+CSVOUTPUT = []
+
+def get_app_info(links):
+    """Scrape game info from respective page"""
+    for link in links:
+        print(link)
+        try:
+            tree = html.fromstring(requests.get(link).content)#makes xpath tree
+            gamename = tree.xpath('//div[@class="_1hfq"]/text()')[0]#Game title
+            soup = BeautifulSoup(urlopen(link), 'html.parser')#soup of game page
+            block = soup.find_all('div', attrs={'class': '_21oy'})#finds all Info
+            for indexnum, categories in enumerate(block): #pylint: disable=locally-disabled, W0612
+            #looks through all Info bearing matches
+                pcat = (block[indexnum].find_parent(class_="_21ot"))#Parent tree
+                catget = pcat.find('div', attrs={'class': '_21ou'}).get_text()#Category
+                info = pcat.find('div', attrs={'class': '_21oy'}).get_text()#Info
+                try:#if Category matches, scribe Info to be appended
+                    if catget == 'Category':
+                        category = info
+                    if catget == 'Genres':
+                        genres = re.sub(r"\B([A-Z])", r", \1", info)#adds spaces between capitals
+                    if catget == 'Developer':
+                        developer = info
+                    if catget == 'Publisher':
+                        publisher = info
+                    if catget == 'Website':
+                        website = info
+                except IndexError:
+                    pass
+        except IndexError:
+            continue
+
+        CSVOUTPUT.append([gamename, category, genres, developer, publisher, website])
+        #game data sorted and stored in array
+
+def de_dup(links):
+    """Eliminates non unique elements in list"""
+    output = []
+    seen = set()
+    for link in links:
+        if link not in seen:
+            output.append(link)
+            seen.add(link)
+    return output
+
+csv.register_dialect(
+    'mydialect',
+    delimiter='|',
+    quotechar='"',
+    doublequote=True,
+    skipinitialspace=True,
+    lineterminator='\r\n',
+    quoting=csv.QUOTE_MINIMAL)
+    #specifications for .csv output
+
+firstp = urlopen('https://www.oculus.com/experiences/rift/')
+b_all = BeautifulSoup(firstp, 'html.parser')#pulls html from link
+words = str(b_all.prettify())#pretty string
+
+links = []
+
+sub = re.findall(r'href=\\"\\/experiences\\/(.+?)\\/\\', words)#finds all href in html string
+for x, entries in enumerate(sub):
+    fullurl = 'https://www.oculus.com/experiences/' + sub[x]#completes url substring
+    translate = dict.fromkeys(map(ord, r'\\'), None)#library to remove \
+    newurl = fullurl.translate(translate)
+    links.append(newurl)
+
+unique = de_dup(links)
+
+get_app_info(unique)
+
+with open('riftscrape.csv', 'w') as mycsvfile:
+    DATAWRITE = csv.writer(mycsvfile, dialect='mydialect')
+    for row in CSVOUTPUT:
+        print(row)
+        DATAWRITE.writerow(row)
+        #.csv write
