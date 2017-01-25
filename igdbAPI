@@ -1,0 +1,57 @@
+"""api notepad"""
+#pylint: disable=locally-disabled, C0301, W0612
+
+import json
+import requests
+
+KEY = "rqhcZY0iyDmshHHavJlNGD0JLMpOp1BzirUjsnAjlSk8MRVlsE"
+#mashape key
+
+def api_ping(engine):
+    """api get"""
+    if engine == 'Epic':
+        unreal_run()
+    else:
+        resp = requests.get(
+            "https://igdbcom-internet-game-database-v1.p.mashape.com/game_engines/?fields=games&search=" + engine,
+            headers={
+                "X-Mashape-Key": KEY,
+                "Accept": "application/json"})
+    data = resp.json()
+    games = []
+    for index, dictionary in enumerate(data):
+        #creates dictionaries for n engine matches
+        games = games + data[index]["games"]
+    return games
+
+def unreal_run():
+    """runs api_ping twice to catch Unreal & UE strings"""
+    api_ping('Unreal')
+    api_ping('UE(.+?)')
+
+
+def get_game(games):
+    """fetch data from game ids"""
+    for index, game in enumerate(games):
+        print(index)
+        resp = requests.get(
+            "https://igdbcom-internet-game-database-v1.p.mashape.com/games/?fields=name&filter[id][eq]=" + str(games[index]),
+            headers={
+                "X-Mashape-Key": KEY,
+                "Accept": "application/json"})
+        info = json.dumps(resp.json())
+        print(info)
+
+
+#UNITY = api_ping('Unity')
+#UNREAL = api_ping('Epic')
+#get_game(UNITY)
+
+
+resp = requests.get(
+    "https://igdbcom-internet-game-database-v1.p.mashape.com/games/?fields=name,game_engines&filter[game_engines]=404",
+    headers={
+        "X-Mashape-Key": KEY,
+        "Accept": "application/json"})
+info = json.dumps(resp.json())
+print(info)
